@@ -1,0 +1,118 @@
+Name:
+  de: Personenwagen im Kanton Aargau
+  fr: Voitures particulières dans le canton d'Argovie
+  it: Autovetture nel cantone di Argovia
+  en: Passenger cars in the canton of Aargau
+Description:
+  de: Anzahl Personenwagen für alle Gemeinden im Kanton Aargau nach Jahr.
+  fr: Nombre de voitures particulières pour toutes les communes du canton d'Argovie par année.
+  it: Numero di autovetture per tutti i comuni del cantone di Argovia per anno.
+  en: Number of passenger cars for all municipalities in the canton of Aargau by year.
+Publisher: 
+  - IRI: https://www.bfh.ch
+Creator:
+  - IRI: https://www.bfh.ch
+Contributor:
+  - IRI: https://www.ag.ch/de/themen/staat-politik/statistik
+Date Created:
+  2026-02-02
+Contact Point:
+  E-Mail: benedikt.hitz@bfh.ch
+  Name: Benedikt Hitz
+Base-URI: https://environment.ld.admin.ch/agvch/
+Identifier: cars_ag
+Version: 1
+Work Status: 
+  Draft
+Visualize:
+  True
+# Optional but recommended
+Accrual Periodicity: yearly
+
+# Optional
+Namespace: car
+
+dimensions:
+  # required
+  muniDescription:
+    name:
+      de: Gemeindebeschreibung
+      fr: Description de la commune
+      it: Descrizione del comune
+      en: Municipality Description
+    description:
+      de: Entstehungsgeschichte dieser Gemeindeversion
+      fr: Histoire de la création de cette version de la commune
+      it: Storia della creazione di questa versione del comune
+      en: History of the creation of this version of the municipality
+    datatype: URI
+    scale-type: nominal
+    path: muniDescription
+    dimension-type: Annotation
+
+  date:
+    name:
+      de: Datum
+      fr: Date
+      it: Data
+      en: Date
+    description:
+      de: Datum der Erhebung
+      fr: Date de l'enquête
+      it: Data del sondaggio
+      en: Date of the survey
+    scale-type: interval
+    datatype: date
+    path: date
+    dimension-type: Key Dimension
+    data-kind: 
+      type: temporal
+      unit: day
+
+  PERS_WAGEN:
+    name:
+      de: Anzahl Personenwagen
+      fr: Nombre de voitures particulières
+      it: Numero di autovetture
+      en: Number of passenger cars
+    description:
+      de: Anzahl Personenwagen
+      fr: Nombre de voitures particulières
+      it: Numero di autovetture
+      en: Number of passenger cars
+    dimension-type: Measure Dimension
+    scale-type: ratio
+    datatype: integer
+    path: data
+    unit: NUM
+
+  bfsNr:
+    name:
+      de: Gemeinde
+      fr: Commune
+      it: Comune
+      en: Municipality
+    description:
+      de: Gemeinde im Kanton Aargau
+      fr: Commune dans le canton d'Argovie
+      it: Comune nel cantone di Argovia
+      en: Municipality in the canton of Aargau
+    datatype: URI
+    scale-type: nominal
+    path: municipality
+    dimension-type: Key Dimension
+    data-kind:
+      type: spatial-shape
+    mapping:
+      type: additive
+      base: https://ld.admin.ch/municipality/
+    hierarchy:
+      - root: https://ld.admin.ch/canton/19
+        name: Aargau
+        next-in-hierarchy:
+          name: District
+          path: http://schema.org/hasPart
+          next-in-hierarchy:
+            name: Municipality
+            path: http://schema.org/hasPart
+
