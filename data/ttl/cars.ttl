@@ -27,8 +27,8 @@
     schema:creativeWorkStatus <https://ld.admin.ch/vocabulary/CreativeWorkStatus/Draft> ;
     schema:creator <https://www.bfh.ch> ;
     schema:dateCreated "2026-02-02"^^xsd:date ;
-    schema:dateModified "2026-05-01T15:31:04+00:00"^^xsd:dateTime ;
-    schema:datePublished "2026-05-01"^^xsd:date ;
+    schema:dateModified "2026-05-04T14:21:57+00:00"^^xsd:dateTime ;
+    schema:datePublished "2026-05-04"^^xsd:date ;
     schema:description "Anzahl Personenwagen für alle Gemeinden im Kanton Aargau nach Jahr."@de,
         "Number of passenger cars for all municipalities in the canton of Aargau by year."@en,
         "Nombre de voitures particulières pour toutes les communes du canton d'Argovie par année."@fr,
@@ -89867,7 +89867,21 @@
 <https://environment.ld.admin.ch/agvch//cars_ag/1/shape> a sh:NodeShape,
         cube:Constraint ;
     sh:closed true ;
-    sh:property [ a cube:KeyDimension ;
+    sh:property [ qudt:scaleType qudt:NominalScale ;
+            schema:description "Entstehungsgeschichte dieser Gemeindeversion"@de,
+                "History of the creation of this version of the municipality"@en,
+                "Histoire de la création de cette version de la commune"@fr,
+                "Storia della creazione di questa versione del comune"@it ;
+            schema:name "Gemeindebeschreibung"@de,
+                "Municipality Description"@en,
+                "Description de la commune"@fr,
+                "Descrizione del comune"@it ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRI,
+                sh:Literal ;
+            sh:path car:muniDescription ],
+        [ a cube:KeyDimension ;
             qudt:scaleType qudt:IntervalScale ;
             schema:description "Datum der Erhebung"@de,
                 "Date of the survey"@en,
@@ -89889,6 +89903,24 @@
         [ sh:in ( cube:Observation ) ;
             sh:nodeKind sh:IRI ;
             sh:path rdf:type ],
+        [ a cube:MeasureDimension ;
+            qudt:hasUnit unit:NUM ;
+            qudt:scaleType qudt:RatioScale ;
+            schema:description "Anzahl Personenwagen"@de,
+                "Number of passenger cars"@en,
+                "Nombre de voitures particulières"@fr,
+                "Numero di autovetture"@it ;
+            schema:name "Anzahl Personenwagen"@de,
+                "Number of passenger cars"@en,
+                "Nombre de voitures particulières"@fr,
+                "Numero di autovetture"@it ;
+            sh:datatype xsd:integer ;
+            sh:maxCount 1 ;
+            sh:maxInclusive 11619 ;
+            sh:minCount 1 ;
+            sh:minInclusive 11 ;
+            sh:nodeKind sh:Literal ;
+            sh:path car:data ],
         [ sh:in ( <https://www.bfh.ch> ) ;
             sh:nodeKind sh:IRI ;
             sh:path cube:observedBy ],
@@ -89914,37 +89946,5 @@
                     meta:nextInHierarchy [ schema:name "District" ;
                             sh:path schema:hasPart ;
                             meta:nextInHierarchy [ schema:name "Municipality" ;
-                                    sh:path schema:hasPart ] ] ] ],
-        [ qudt:scaleType qudt:NominalScale ;
-            schema:description "Entstehungsgeschichte dieser Gemeindeversion"@de,
-                "History of the creation of this version of the municipality"@en,
-                "Histoire de la création de cette version de la commune"@fr,
-                "Storia della creazione di questa versione del comune"@it ;
-            schema:name "Gemeindebeschreibung"@de,
-                "Municipality Description"@en,
-                "Description de la commune"@fr,
-                "Descrizione del comune"@it ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:nodeKind sh:IRI,
-                sh:Literal ;
-            sh:path car:muniDescription ],
-        [ a cube:MeasureDimension ;
-            qudt:hasUnit unit:NUM ;
-            qudt:scaleType qudt:RatioScale ;
-            schema:description "Anzahl Personenwagen"@de,
-                "Number of passenger cars"@en,
-                "Nombre de voitures particulières"@fr,
-                "Numero di autovetture"@it ;
-            schema:name "Anzahl Personenwagen"@de,
-                "Number of passenger cars"@en,
-                "Nombre de voitures particulières"@fr,
-                "Numero di autovetture"@it ;
-            sh:datatype xsd:integer ;
-            sh:maxCount 1 ;
-            sh:maxInclusive 11619 ;
-            sh:minCount 1 ;
-            sh:minInclusive 11 ;
-            sh:nodeKind sh:Literal ;
-            sh:path car:data ] .
+                                    sh:path schema:hasPart ] ] ] ] .
 
