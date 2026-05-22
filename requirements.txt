@@ -4,3 +4,5 @@ pandas
 rdflib
 pylindas
 dotenv
+seaborn
+matplotlib
