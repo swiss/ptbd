@@ -86,6 +86,45 @@
     cursor: pointer;
   }
   button:hover { opacity: 0.85; }
+  .tariffs {
+    width: 100%;
+    max-width: 480px;
+    border: 1px solid var(--line);
+    background: #fff;
+    padding: 1.25rem 1.5rem;
+    min-height: 3rem;
+  }
+  .tariffs h2 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 0.9rem 0;
+    text-align: left;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 0.9rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.4rem 0.5rem;
+    border-bottom: 1px solid var(--line);
+  }
+  th {
+    font-weight: 600;
+    color: var(--muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+  td.tarif {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
 </style>
 </head>
 <body>
@@ -96,6 +135,11 @@
     <span class="status" id="status">Lade …</span>
   </div>
 
+  <div class="tariffs" id="tariffs">
+    <h2>Stromtarife (Kategorie H4, 2026)</h2>
+    <span class="status" id="tariffStatus">Lade …</span>
+  </div>
+
   <form id="bfsForm">
     <input type="text" id="bfsInput" placeholder="BFS-Nr., z. B. 351" inputmode="numeric">
     <button type="submit">Anzeigen</button>
@@ -103,6 +147,7 @@
 
   <script>
     const endpoint = "https://query.wikidata.org/sparql";
+    const elcomEndpoint = "https://ld.admin.ch/query";
 
     function getBfsFromUrl() {
       const params = new URLSearchParams(window.location.search);
@@ -114,6 +159,64 @@
   ?muni wdt:P771 "${bfsNr}" ;
         wdt:P41 ?flag .
 } LIMIT 1`;
+    }
+
+    function buildTariffQuery(bfsNr) {
+      return `PREFIX schema: <http://schema.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT ?Betreiber ?Tarif WHERE {
+	?obs <https://energy.ld.admin.ch/elcom/electricityprice/dimension/period> "2026"^^xsd:gYear;
+      <https://energy.ld.admin.ch/elcom/electricityprice/dimension/municipality> <https://ld.admin.ch/municipality/${bfsNr}> ;
+      <https://energy.ld.admin.ch/elcom/electricityprice/dimension/category> <https://energy.ld.admin.ch/elcom/electricityprice/category/H4> ;
+      <https://energy.ld.admin.ch/elcom/electricityprice/dimension/product> <https://energy.ld.admin.ch/elcom/electricityprice/product/standard> ;
+      <https://energy.ld.admin.ch/elcom/electricityprice/dimension/operator>/schema:name ?Betreiber ;
+      <https://energy.ld.admin.ch/elcom/electricityprice/dimension/total> ?Tarif .
+}
+ORDER BY ?Betreiber`;
+    }
+
+    async function loadTariffs(bfsNr) {
+      const container = document.getElementById("tariffs");
+
+      if (!bfsNr) {
+        container.innerHTML = '<h2>Stromtarife (Kategorie H4, 2026)</h2><span class="status">Warte auf BFS-Nummer …</span>';
+        return;
+      }
+
+      container.innerHTML = '<h2>Stromtarife (Kategorie H4, 2026)</h2><span class="status" id="tariffStatus">Lade …</span>';
+
+      const url = elcomEndpoint + "?query=" + encodeURIComponent(buildTariffQuery(bfsNr)) + "&format=json";
+
+      try {
+        const res = await fetch(url, {
+          headers: { "Accept": "application/sparql-results+json" }
+        });
+        if (!res.ok) throw new Error("Elcom-Anfrage fehlgeschlagen (" + res.status + ")");
+
+        const data = await res.json();
+        const bindings = data.results.bindings;
+
+        if (bindings.length === 0) {
+          container.innerHTML = '<h2>Stromtarife (Kategorie H4, 2026)</h2><span class="status error">Keine Tarifdaten für BFS-Nr. ' + bfsNr + ' gefunden.</span>';
+          return;
+        }
+
+        const rows = bindings.map(b => {
+          const betreiber = b.Betreiber.value;
+          const tarif = parseFloat(b.Tarif.value).toFixed(2);
+          return `<tr><td>${betreiber}</td><td class="tarif">${tarif} Rp./kWh</td></tr>`;
+        }).join("");
+
+        container.innerHTML = `
+          <h2>Stromtarife (Kategorie H4, 2026)</h2>
+          <table>
+            <thead><tr><th>Betreiber</th><th>Tarif</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>`;
+
+      } catch (err) {
+        container.innerHTML = '<h2>Stromtarife (Kategorie H4, 2026)</h2><span class="status error">Fehler: ' + err.message + '</span>';
+      }
     }
 
     async function loadFlag(bfsNr) {
@@ -168,6 +271,7 @@
         const newUrl = window.location.pathname + "?bfs=" + encodeURIComponent(val);
         window.history.pushState({}, "", newUrl);
         loadFlag(val);
+        loadTariffs(val);
       }
     });
 
@@ -175,6 +279,7 @@
     const initialBfs = getBfsFromUrl();
     if (initialBfs) document.getElementById("bfsInput").value = initialBfs;
     loadFlag(initialBfs);
+    loadTariffs(initialBfs);
   </script>
 
 </body>
