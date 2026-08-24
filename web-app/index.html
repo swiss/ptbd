@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gemeindeflagge – BFS-Nummer</title>
+<style>
+  :root {
+    --ink: #1c1c1c;
+    --paper: #fafaf8;
+    --line: #d8d6cf;
+    --accent: #b5121b; /* Schweizer Rot */
+    --muted: #6b6b66;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Iowan Old Style", "Georgia", serif;
+    padding: 2rem 1rem;
+    text-align: center;
+  }
+  h1 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0;
+  }
+  .bfs {
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .frame {
+    border: 1px solid var(--line);
+    background: #fff;
+    padding: 1.5rem;
+    min-width: 300px;
+    min-height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  img {
+    max-width: 300px;
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .status {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .status.error { color: var(--accent); }
+  input[type="text"] {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 0.95rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    width: 8rem;
+    text-align: center;
+  }
+  form {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  button {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  button:hover { opacity: 0.85; }
+</style>
+</head>
+<body>
+
+  <h1>Gemeindeflagge <span class="bfs" id="bfsLabel"></span></h1>
+
+  <div class="frame" id="frame">
+    <span class="status" id="status">Lade …</span>
+  </div>
+
+  <form id="bfsForm">
+    <input type="text" id="bfsInput" placeholder="BFS-Nr., z. B. 351" inputmode="numeric">
+    <button type="submit">Anzeigen</button>
+  </form>
+
+  <script>
+    const endpoint = "https://query.wikidata.org/sparql";
+
+    function getBfsFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("bfs");
+    }
+
+    function buildQuery(bfsNr) {
+      return `SELECT ?flag WHERE {
+  ?muni wdt:P771 "${bfsNr}" ;
+        wdt:P41 ?flag .
+} LIMIT 1`;
+    }
+
+    async function loadFlag(bfsNr) {
+      const frame = document.getElementById("frame");
+      const label = document.getElementById("bfsLabel");
+      label.textContent = bfsNr ? `(BFS-Nr. ${bfsNr})` : "";
+
+      if (!bfsNr) {
+        frame.innerHTML = '<span class="status">Bitte BFS-Nummer als URL-Parameter <code>?bfs=</code> angeben oder unten eingeben.</span>';
+        return;
+      }
+
+      frame.innerHTML = '<span class="status">Lade …</span>';
+
+      const url = endpoint + "?query=" + encodeURIComponent(buildQuery(bfsNr)) + "&format=json";
+
+      try {
+        const res = await fetch(url, {
+          headers: { "Accept": "application/sparql-results+json" }
+        });
+        if (!res.ok) throw new Error("Wikidata-Anfrage fehlgeschlagen (" + res.status + ")");
+
+        const data = await res.json();
+        const bindings = data.results.bindings;
+
+        if (bindings.length === 0) {
+          frame.innerHTML = '<span class="status error">Keine Flagge für BFS-Nr. ' + bfsNr + ' gefunden.</span>';
+          return;
+        }
+
+        const flagUrl = bindings[0].flag.value;
+        const thumbUrl = flagUrl + "?width=300";
+
+        frame.innerHTML = "";
+        const img = document.createElement("img");
+        img.src = thumbUrl;
+        img.alt = "Flagge der Gemeinde (BFS-Nr. " + bfsNr + ")";
+        img.onerror = () => {
+          frame.innerHTML = '<span class="status error">Flagge konnte nicht geladen werden.</span>';
+        };
+        frame.appendChild(img);
+
+      } catch (err) {
+        frame.innerHTML = '<span class="status error">Fehler: ' + err.message + '</span>';
+      }
+    }
+
+    document.getElementById("bfsForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const val = document.getElementById("bfsInput").value.trim();
+      if (val) {
+        const newUrl = window.location.pathname + "?bfs=" + encodeURIComponent(val);
+        window.history.pushState({}, "", newUrl);
+        loadFlag(val);
+      }
+    });
+
+    // Initial load
+    const initialBfs = getBfsFromUrl();
+    if (initialBfs) document.getElementById("bfsInput").value = initialBfs;
+    loadFlag(initialBfs);
+  </script>
+
+</body>
+</html>
